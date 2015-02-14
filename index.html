@@ -13,7 +13,50 @@ body {
     overflow: hidden;
 }
 
-#message{
+.spinner {
+    display: inline-block;
+    width: 27px;
+    height: 24px;
+    text-align: center;
+    font-size: 10px;
+    vertical-align: middle;
+}
+
+.spinner > div {
+    background-color: #fff;
+    height: 100%;
+    width: 6px;
+    display: inline-block;
+    -webkit-animation: stretchdelay 1.2s infinite ease-in-out;
+    animation: stretchdelay 1.2s infinite ease-in-out;
+}
+
+.spinner .rect2 {
+    -webkit-animation-delay: -1.1s;
+    animation-delay: -1.1s;
+}
+
+.spinner .rect3 {
+    -webkit-animation-delay: -1.0s;
+    animation-delay: -1.0s;
+}
+
+@-webkit-keyframes stretchdelay {
+    0%, 40%, 100% { -webkit-transform: scaleY(0.4) }  
+    20% { -webkit-transform: scaleY(1.0) }
+}
+
+@keyframes stretchdelay {
+    0%, 40%, 100% { 
+        transform: scaleY(0.4);
+        -webkit-transform: scaleY(0.4);
+    } 20% { 
+        transform: scaleY(1.0);
+        -webkit-transform: scaleY(1.0);
+    }
+}
+
+#message {
     color: #fff;
     position: absolute;
     padding: 5px 20px;
@@ -34,7 +77,15 @@ a {
     </style>
 </head>
 <body>
-    <div id="message">CONNECTING TO STREAM</div>
+    <div id="message">
+        <div class="spinner">
+            <div class="rect1"></div>
+            <div class="rect2"></div>
+            <div class="rect3"></div>
+        </div>
+
+        CONNECTING TO STREAM
+    </div>
     <script src="assets/three.min.js"></script>
     <script src='assets/dat.gui.min.js'></script>
     <script src="assets/EffectComposer.js"></script>
@@ -80,7 +131,7 @@ a {
         }
 
         videoInit = true;
-        document.getElementById('message').innerText = 'PLEASE STAND BY';
+        //document.getElementById('message').innerText = 'PLEASE STAND BY';
 
         init();
         animate();
