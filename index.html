@@ -125,6 +125,7 @@ a {
     //Load Video
     video = document.createElement('video');
     video.loop = true;
+    video.volume = 0.5;
     video.addEventListener('canplaythrough', function () {
         if (videoInit) {
             return;
