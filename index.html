@@ -154,7 +154,7 @@ a {
         });
 
         //Add video plane
-        var planeGeometry = new THREE.PlaneGeometry(1080, 720,1,1);
+        var planeGeometry = new THREE.PlaneGeometry(1280, 720,1,1);
         var plane = new THREE.Mesh(planeGeometry, videoMaterial);
         scene.add(plane);
         plane.z = 0;
@@ -162,7 +162,7 @@ a {
 
         //init renderer
         renderer = new THREE.WebGLRenderer();
-        renderer.setSize(800, 600);
+        renderer.setSize(1280, 720);
         document.body.appendChild(renderer.domElement);
 
         //POST PROCESSING
