@@ -1,34 +1,40 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
     <title>KXBM.net - Live Video News Feed</title>
     <meta charset="utf-8">
+    <link rel="icon" type="image/png" href="favicon.ico">
+    <link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:900" rel="stylesheet" type="text/css">
+
     <style>
-    body {
-        background-color: #000;
-        margin: 0px;
-        overflow: hidden;
-    }
+body {
+    background-color: #000;
+    margin: 0px;
+    overflow: hidden;
+}
 
-    #info {
-        color: #fff;
-        position: absolute;
-        bottom: 20px;
-        padding: 5px 20px;
-        font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
-        font-weight: 100;
-        font-size: 18px;
-        background-color: #000;
-    }
+#message{
+    color: #fff;
+    position: absolute;
+    padding: 5px 20px;
+    font-family: 'Source Sans Pro', sans-serif;
+    font-weight: 900;
+    font-size: 18px;
+    background-color: #000;
+    width: 250px;
+    text-align: center;
+    top: 50%;
+    left: 50%;
+    margin-left: -125px;
+}
 
-    a {
-        color: #DDD;                
-    }
-
+a {
+    color: #DDD;
+}
     </style>
 </head>
 <body>
+    <div id="message">CONNECTING TO STREAM</div>
     <script src="assets/three.min.js"></script>
     <script src='assets/dat.gui.min.js'></script>
     <script src="assets/EffectComposer.js"></script>
@@ -64,19 +70,22 @@
     var gui;
     var pnoise, globalParams;
 
-    init();
-    animate();
+    //Load Video
+    video = document.createElement('video');
+    video.loop = true;
+    video.addEventListener('canplaythrough', function () {
+        document.getElementById('message').innerText = 'PLEASE STAND BY';
+
+        init();
+        animate();
+    });
+    video.src = 'assets/background.mp4';
+    video.play();
 
     function init() {
         camera = new THREE.PerspectiveCamera(55, 1080/ 720, 20, 3000);
         camera.position.z = 1000;
         scene = new THREE.Scene();
-
-        //Load Video
-        video = document.createElement('video');
-        video.loop = true;
-        video.src = 'assets/background.mp4';
-        video.play();
 
         //init video texture
         videoTexture = new THREE.Texture(video);
