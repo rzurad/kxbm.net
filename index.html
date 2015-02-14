@@ -69,11 +69,17 @@ a {
     var renderPass, copyPass;
     var gui;
     var pnoise, globalParams;
+    var videoInit = false;
 
     //Load Video
     video = document.createElement('video');
     video.loop = true;
     video.addEventListener('canplaythrough', function () {
+        if (videoInit) {
+            return;
+        }
+
+        videoInit = true;
         document.getElementById('message').innerText = 'PLEASE STAND BY';
 
         init();
