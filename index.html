@@ -189,20 +189,8 @@ a {
         copyPass = new THREE.ShaderPass(THREE.CopyShader);
 
         //set shader uniforms
-        filmPass.uniforms.grayscale.value = 0;
-
-        /*
-        badTVParams = {
-            distortion: 3.0, //lerp
-            distortion2: 1.0, //lerp
-        }
-
-        function onParamsChange() {
-            badTVPass.uniforms.distortion.value = badTVParams.distortion;
-            badTVPass.uniforms.distortion2.value = badTVParams.distortion2;
-        }
-        */
-
+        badTVPass.uniforms.distortion.value = 0.1;
+        badTVPass.uniforms.distortion2.value = 0.1;
         badTVPass.uniforms.speed.value = 0.1;
         badTVPass.uniforms.rollSpeed.value = 0.1;
 
@@ -215,7 +203,10 @@ a {
         filmPass.uniforms.sCount.value = 750;
         filmPass.uniforms.sIntensity.value = 0.4;
         filmPass.uniforms.nIntensity.value = 0.2;
+        filmPass.uniforms.grayscale.value = 0;
 
+        lerp_mirror(badTVPass, 'distortion', 0.1, 7.6, function (st) { return st % 100 / 100; });
+        lerp_mirror(badTVPass, 'distortion2', 0.1, 10, function (st) { return st % 100 / 100; });
         lerp_mirror(rgbPass, 'amount', 0, 0.025, function (st) { return st * 1.5 % 100 / 100; });
         lerp_mirror(staticPass, 'amount', 0.07, 0.14, function (st) { return st % 100 / 100; });
         lerp_mirror(filmPass, 'sIntensity', 0.4, 0.8, function (st) { return st / 10 % 100 / 100; });
