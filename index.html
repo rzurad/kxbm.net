@@ -131,8 +131,7 @@ a {
     }
 
     var camera, scene, renderer, video, videoTexture, videoMaterial, composer,
-        badTVParams, badTVPass, staticParams, staticPass, rgbParams, rgbPass,
-        filmParams, filmPass, renderPass, copyPass, pnoise, globalParams,
+        badTVPass, staticPass, rgbPass, filmPass, renderPass, copyPass,
         shaderTime = 0,
         videoInit = false;
 
@@ -192,25 +191,19 @@ a {
         //set shader uniforms
         filmPass.uniforms.grayscale.value = 0;
 
+        /*
         badTVParams = {
             distortion: 3.0, //lerp
             distortion2: 1.0, //lerp
-            speed: 0.3, //lerp
         }
 
-        rgbParams = {
-            amount: 0.005, //lerp 0 to 0.025
-            angle: 0.0, //lerp 0 to 2
-        }
-
-        /*
         function onParamsChange() {
             badTVPass.uniforms.distortion.value = badTVParams.distortion;
             badTVPass.uniforms.distortion2.value = badTVParams.distortion2;
-            badTVPass.uniforms.speed.value = badTVParams.speed;
         }
         */
 
+        badTVPass.uniforms.speed.value = 0.1;
         badTVPass.uniforms.rollSpeed.value = 0.1;
 
         rgbPass.uniforms.amount.value = 0;
@@ -231,6 +224,13 @@ a {
         setInterval(function () {
             rgbPass.uniforms.angle = lerp(shaderTime * 1.8 % 100 / 100, 0, 2) * Math.PI;
         }, 100);
+
+        (function distortChange() {
+            setTimeout(function () {
+                badTVPass.uniforms.speed.value = 0.1 + Math.random() * 0.3;
+                distortChange();
+            }, 1000 + ~~(Math.random() * 7000));
+        }());
 
         (function rollChange() {
             setTimeout(function () {
