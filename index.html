@@ -87,7 +87,6 @@ a {
         CONNECTING TO STREAM
     </div>
     <script src="assets/three.min.js"></script>
-    <script src='assets/dat.gui.min.js'></script>
     <script src="assets/EffectComposer.js"></script>
     <script src="assets/RenderPass.js"></script>
     <script src="assets/ShaderPass.js"></script>
@@ -98,7 +97,8 @@ a {
     <script src="assets/BadTVShader.js"></script>
     <script src="assets/StaticShader.js"></script>
     <script>
-
+// Makes gratuitous use of the "Bad TV Effect Demo" by Felix Turner (www.airtight.cc / @felixturner)
+// Thank you for an awesome shader, Felix :)
 (function () {
     "use strict";
 
@@ -106,21 +106,35 @@ a {
         return start + (end - start) * ratio;
     }
 
-    //Bad TV Effect Demo
-    //Using Three.js r.66
-    //by Felix Turner / www.airtight.cc / @felixturner
-    var camera, scene, renderer;
-    var video, videoTexture,videoMaterial;
-    var composer;
-    var shaderTime = 0;
-    var badTVParams, badTVPass;     
-    var staticParams, staticPass;       
-    var rgbParams, rgbPass; 
-    var filmParams, filmPass;   
-    var renderPass, copyPass;
-    var gui;
-    var pnoise, globalParams;
-    var videoInit = false;
+    function lerp_mirror(pass, property, start, stop, step) {
+        var lastLerpProp = property + '_lastLerp';
+
+        pass.backward = false;
+        pass[lastLerpProp] = 0;
+
+        return setInterval(function () {
+            var s = step(shaderTime),
+                last = pass[lastLerpProp],
+                l = lerp.apply(0, [s].concat(pass.backward ? [stop, start] : [start, stop]));
+
+            if (pass.backward && l > last) {
+                pass.backward = false;
+                l = lerp.apply(0, [s, start, stop]);
+            } else if (!pass.backward && l < last) {
+                pass.backward = true;
+                l = lerp.apply(0, [s, stop, start]);
+            }
+
+            pass.uniforms[property].value = l;
+            pass[lastLerpProp] = l;
+        }, 100);
+    }
+
+    var camera, scene, renderer, video, videoTexture, videoMaterial, composer,
+        badTVParams, badTVPass, staticParams, staticPass, rgbParams, rgbPass,
+        filmParams, filmPass, renderPass, copyPass, pnoise, globalParams,
+        shaderTime = 0,
+        videoInit = false;
 
     //Load Video
     video = document.createElement('video');
@@ -178,141 +192,65 @@ a {
         //set shader uniforms
         filmPass.uniforms.grayscale.value = 0;
 
-        //Init DAT GUI control panel
         badTVParams = {
-            show: true,
-            distortion: 3.0,
-            distortion2: 1.0,
-            speed: 0.3,
-            rollSpeed: 0.1
-        }
-
-        staticParams = {
-            show: true,
-            amount:0.5,
-            size2:4.0
+            distortion: 3.0, //lerp
+            distortion2: 1.0, //lerp
+            speed: 0.3, //lerp
         }
 
         rgbParams = {
-            show: true,
-            amount: 0.005,
-            angle: 0.0,
+            amount: 0.005, //lerp 0 to 0.025
+            angle: 0.0, //lerp 0 to 2
         }
 
-        filmParams = {
-            show: true,
-            count: 800,
-            sIntensity: 0.9,
-            nIntensity: 0.4
+        /*
+        function onParamsChange() {
+            badTVPass.uniforms.distortion.value = badTVParams.distortion;
+            badTVPass.uniforms.distortion2.value = badTVParams.distortion2;
+            badTVPass.uniforms.speed.value = badTVParams.speed;
         }
+        */
 
-        gui = new dat.GUI();
-        
-        var f1 = gui.addFolder('Bad TV');
-        f1.add(badTVParams, 'show').onChange(onToggleShaders);
-        f1.add(badTVParams, 'distortion', 0.1, 20).step(0.1).listen().name("Thick Distort").onChange(onParamsChange);
-        f1.add(badTVParams, 'distortion2', 0.1, 20).step(0.1).listen().name("Fine Distort").onChange(onParamsChange);
-        f1.add(badTVParams, 'speed', 0.0, 1.0).step(0.01).listen().name("Distort Speed").onChange(onParamsChange);
-        f1.add(badTVParams, 'rollSpeed', 0.0, 1.0).step(0.01).listen().name("Roll Speed").onChange(onParamsChange);
-        f1.open();
+        badTVPass.uniforms.rollSpeed.value = 0.1;
 
-        var f2 = gui.addFolder('RGB Shift');
-        f2.add(rgbParams, 'show').onChange(onToggleShaders);
-        f2.add(rgbParams, 'amount', 0.0, 0.1).listen().onChange(onParamsChange);
-        f2.add(rgbParams, 'angle', 0.0, 2.0).listen().onChange(onParamsChange);
-        f2.open();
+        rgbPass.uniforms.amount.value = 0;
+        rgbPass.uniforms.angle.value = 0;
 
-        var f4 = gui.addFolder('Static');
+        staticPass.uniforms.amount.value = 0.07;
+        staticPass.uniforms.size.value = 4.0;
 
-        f4.add(staticParams, 'show').onChange(onToggleShaders);
-        f4.add(staticParams, 'amount', 0.0, 1.0).step(0.01).listen().onChange(onParamsChange);
-        f4.add(staticParams, 'size2', 1.0, 100.0).step(1.0).onChange(onParamsChange);
-        f4.open();
+        filmPass.uniforms.sCount.value = 750;
+        filmPass.uniforms.sIntensity.value = 0.4;
+        filmPass.uniforms.nIntensity.value = 0.2;
 
-        var f3 = gui.addFolder('Scanlines');
+        lerp_mirror(rgbPass, 'amount', 0, 0.025, function (st) { return st * 1.5 % 100 / 100; });
+        lerp_mirror(staticPass, 'amount', 0.07, 0.14, function (st) { return st % 100 / 100; });
+        lerp_mirror(filmPass, 'sIntensity', 0.4, 0.8, function (st) { return st / 10 % 100 / 100; });
+        lerp_mirror(filmPass, 'nIntensity', 0.2, 1.5, function (st) { return st / 5 % 100 / 100; });
 
-        f3.add(filmParams, 'show').onChange(onToggleShaders);
-        f3.add(filmParams, 'count', 50, 1000).onChange(onParamsChange);
-        f3.add(filmParams, 'sIntensity', 0.0, 2.0).step(0.1).onChange(onParamsChange);
-        f3.add(filmParams, 'nIntensity', 0.0, 2.0).step(0.1).onChange(onParamsChange);
-        f3.open();
+        setInterval(function () {
+            rgbPass.uniforms.angle = lerp(shaderTime * 1.8 % 100 / 100, 0, 2) * Math.PI;
+        }, 100);
 
-        gui.close();
+        (function rollChange() {
+            setTimeout(function () {
+                badTVPass.uniforms.rollSpeed.value = Math.random() * 0.17;
+                rollChange();
+            }, 2000 + ~~(Math.random() * 10000)); 
+        }());
 
-        onToggleShaders();
-        onParamsChange();
-
-        window.addEventListener('resize', onResize, false);
-        renderer.domElement.addEventListener('click', randomizeParams, false);
-
-        onResize();
-        randomizeParams();
-    }
-
-    function onParamsChange() {
-        //copy gui params into shader uniforms
-        badTVPass.uniforms.distortion.value = badTVParams.distortion;
-        badTVPass.uniforms.distortion2.value = badTVParams.distortion2;
-        badTVPass.uniforms.speed.value = badTVParams.speed;
-        badTVPass.uniforms.rollSpeed.value = badTVParams.rollSpeed;
-
-        staticPass.uniforms.amount.value = staticParams.amount;
-        staticPass.uniforms.size.value = staticParams.size2;
-
-        rgbPass.uniforms.angle.value = rgbParams.angle * Math.PI;
-        rgbPass.uniforms.amount.value = rgbParams.amount;
-
-        filmPass.uniforms.sCount.value = filmParams.count;
-        filmPass.uniforms.sIntensity.value = filmParams.sIntensity;
-        filmPass.uniforms.nIntensity.value = filmParams.nIntensity;
-    }
-
-    function randomizeParams() {
-        if (Math.random() < 0.2) {
-            // you fixed it!
-            badTVParams.distortion = 0.1;
-            badTVParams.distortion2 = 0.1;
-            badTVParams.speed = 0;
-            badTVParams.rollSpeed = 0;
-            rgbParams.angle = 0;
-            rgbParams.amount = 0;
-            staticParams.amount = 0;
-        } else {
-            badTVParams.distortion = Math.random() * 10 + 0.1;
-            badTVParams.distortion2 = Math.random() * 10 + 0.1;
-            badTVParams.speed = Math.random() * .4;
-            badTVParams.rollSpeed = Math.random() * .2;
-            rgbParams.angle = Math.random() * 2;
-            rgbParams.amount = Math.random() * 0.03;
-            staticParams.amount = Math.random() * 0.2;
-        }
-
-        onParamsChange();
-    }
-
-    function onToggleShaders(){
         // add Shader Passes to Composer. order is important
         composer = new THREE.EffectComposer(renderer);
         composer.addPass(renderPass);
-        
-        if (filmParams.show) {
-            composer.addPass(filmPass);
-        }
-
-        if (badTVParams.show) {
-            composer.addPass(badTVPass);
-        }
-
-        if (rgbParams.show) {
-            composer.addPass(rgbPass);
-        }
-
-        if (staticParams.show) {
-            composer.addPass(staticPass);
-        }
-
+        composer.addPass(filmPass);
+        composer.addPass(badTVPass);
+        composer.addPass(rgbPass);
+        composer.addPass(staticPass);
         composer.addPass(copyPass);
         copyPass.renderToScreen = true;
+
+        window.addEventListener('resize', onResize, false);
+        onResize();
     }
 
     function animate() {
